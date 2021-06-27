@@ -11,5 +11,13 @@ void GraphRender::paintEvent( QPaintEvent *event )
 {
 	QPainter painter( this );
 	painter.setRenderHint( QPainter::Antialiasing );
-	painter.drawText( 50, 50, "TEST" );
+
+	double graphAR = graph->getWidth() / graph->getHeight();
+	double widgetWidth = width(), widgetHeight = height(), widgetAR = widgetWidth / widgetHeight;
+	double newWidth = graphAR > widgetAR ? widgetWidth : widgetHeight * graphAR;
+	double newHeight = graphAR > widgetAR ? widgetWidth / graphAR : widgetHeight;
+	painter.setViewport( 0, 0, newWidth, newHeight );
+	painter.setWindow( 0, 0, graph->getWidth(), graph->getHeight() );
+
+	graph->paint( &painter );
 }

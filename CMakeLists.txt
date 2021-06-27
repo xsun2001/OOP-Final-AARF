@@ -12,6 +12,7 @@ set(REQUIRED_LIBS_QUALIFIED Qt6::Core Qt6::Gui Qt6::Widgets)
 
 add_executable(${PROJECT_NAME}
         main.cpp
+        graph.cpp
         ui.cpp
         graphrender.cpp
         )
