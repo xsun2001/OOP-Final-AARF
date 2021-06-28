@@ -3,10 +3,10 @@
 #include <utility>
 void Graph::paint( QPainter *painter )
 {
-	painter->setPen( QPen( Qt::black, 3 ) );
-	painter->setBrush( Qt::black );
-	painter->fillRect( 0, 0, width, height, Qt::white );
+	painter->setPen( QPen( Qt::black, 1 ) );
+	painter->setBrush( Qt::white );
 	painter->drawRect( 0, 0, width, height );
+	painter->setBrush( Qt::black );
 	for ( auto [pa, pb] : obstacles ) {
 		auto [ax, ay] = pa;
 		auto [bx, by] = pb;
@@ -15,9 +15,9 @@ void Graph::paint( QPainter *painter )
 	for ( auto [pa, pb] : nets ) {
 		auto [ax, ay] = pa;
 		auto [bx, by] = pb;
-		const double diameter = 2;
-		painter->drawEllipse( ax - diameter / 2, ay - diameter / 2, diameter, diameter );
-		painter->drawEllipse( bx - diameter / 2, by - diameter / 2, diameter, diameter );
+		const double radius = 1;
+		painter->drawEllipse( { ax, ay }, radius, radius );
+		painter->drawEllipse( { bx, by }, radius, radius );
 	}
 	painter->setPen( QPen( Qt::gray, 2 ) );
 	for ( auto [pa, pb] : cdt_edges ) {

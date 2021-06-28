@@ -9,6 +9,10 @@ void GraphRender::onGraphChanged( Graph *newGraph )
 
 void GraphRender::paintEvent( QPaintEvent *event )
 {
+	if ( graph == nullptr ) {
+		return;
+	}
+
 	QPainter painter( this );
 	painter.setRenderHint( QPainter::Antialiasing );
 
@@ -16,7 +20,7 @@ void GraphRender::paintEvent( QPaintEvent *event )
 	double widgetWidth = width(), widgetHeight = height(), widgetAR = widgetWidth / widgetHeight;
 	double newWidth = graphAR > widgetAR ? widgetWidth : widgetHeight * graphAR;
 	double newHeight = graphAR > widgetAR ? widgetWidth / graphAR : widgetHeight;
-	painter.setViewport( 0, 0, newWidth, newHeight );
+	painter.setViewport( ( widgetWidth - newWidth ) / 2, ( widgetHeight - newHeight ) / 2, newWidth, newHeight );
 	painter.setWindow( 0, 0, graph->getWidth(), graph->getHeight() );
 
 	graph->paint( &painter );
