@@ -1,4 +1,5 @@
 #include "graph.h"
+#include "util.h"
 #include <QPainterPath>
 #include <utility>
 void Graph::paint( QPainter *painter )
@@ -94,4 +95,38 @@ const std::vector<Graph::TwoPoints> &Graph::getCdtEdges() const
 const std::vector<std::vector<Graph::Point>> &Graph::getRoutes() const
 {
 	return routes;
+}
+
+inline bool inRectangle( Graph::TwoPoints &rec, Graph::Point &point )
+{
+	auto [p1, p2] = rec;
+	auto [x, y] = point;
+	auto [x1, y1] = p1;
+	auto [x2, y2] = p2;
+	return x > x1 && x < x2 && y > y1 && y < y2;
+}
+
+Graph *generateRandomGraph( double width, double height, int obsCount, int netCount )
+{
+	RandomReal random( 0, 1 );
+	// Plain O(N^2) Algorithm
+	std::vector<Graph::TwoPoints> obstacles;
+	for ( int i = 0; i < obsCount; i++ ) {
+		double x = random() * width, y = random() * height, w = random() * ( width - x ), h = random() * ( height - y );
+		obstacles.push_back( { { x, y }, { x + w, y + h } } );
+	}
+	std::vector<Graph::TwoPoints> nets;
+	for ( int i = 0; i < netCount; i++ ) {
+		bool pushed = false;
+		while ( !pushed ) {
+			Graph::Point p1( random() * width, random() * height ), p2( random() * width, random() * height );
+			for ( auto &rec : obstacles ) {
+				if ( !inRectangle( rec, p1 ) && !inRectangle( rec, p2 ) ) {
+					nets.emplace_back( p1, p2 );
+					pushed = true;
+				}
+			}
+		}
+	}
+	return new Graph( width, height, obstacles, nets );
 }

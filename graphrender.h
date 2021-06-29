@@ -1,3 +1,4 @@
+#pragma once
 #include "graph.h"
 #include <QWidget>
 
@@ -11,5 +12,5 @@ protected:
 	void paintEvent( QPaintEvent *event ) override;
 
 private:
-	Graph *graph;
+	Graph *graph = nullptr;
 };

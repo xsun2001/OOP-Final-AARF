@@ -1,3 +1,4 @@
+#pragma once
 #include <QPainter>
 #include <tuple>
 #include <vector>
@@ -24,3 +25,5 @@ private:
 	std::vector<TwoPoints> obstacles, nets, cdt_edges;
 	std::vector<std::vector<Point>> routes;
 };
+
+Graph *generateRandomGraph( double width, double height, int obsCount, int netCount );
