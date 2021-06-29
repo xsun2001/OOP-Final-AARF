@@ -1,6 +1,7 @@
 #include "graph.h"
 #include "util.h"
 #include <QPainterPath>
+#include <cmath>
 #include <utility>
 void Graph::paint( QPainter *painter )
 {
@@ -106,25 +107,55 @@ inline bool inRectangle( Graph::TwoPoints &rec, Graph::Point &point )
 	return x > x1 && x < x2 && y > y1 && y < y2;
 }
 
+inline bool isIntersect( Graph::TwoPoints &rec1, Graph::TwoPoints &rec2 )
+{
+#define X( P ) ( std::get<0>( P ) )
+#define Y( P ) ( std::get<1>( P ) )
+	auto [p11, p12] = rec1;
+	auto [p21, p22] = rec2;
+	return X( p21 ) < X( p12 ) && Y( p21 ) < Y( p12 ) && X( p22 ) > X( p11 ) && Y( p22 ) > Y( p11 );
+#undef X
+#undef Y
+}
+
 Graph *generateRandomGraph( double width, double height, int obsCount, int netCount )
 {
-	RandomReal random( 0, 1 );
+	RandomUniformReal rd1( 0, 1 );
+	RandomNormalReal rd2( 0, 1 );
 	// Plain O(N^2) Algorithm
 	std::vector<Graph::TwoPoints> obstacles;
+	double areaFactor = 1.0 / sqrt( 2 * obsCount );
 	for ( int i = 0; i < obsCount; i++ ) {
-		double x = random() * width, y = random() * height, w = random() * ( width - x ), h = random() * ( height - y );
-		obstacles.push_back( { { x, y }, { x + w, y + h } } );
+		bool pushed = false;
+		while ( !pushed ) {
+			pushed = true;
+			double x = rd1() * width, y = rd1() * height, w = std::min( rd2() * width * areaFactor, width - x ), h = std::min( rd2() * height * areaFactor, height - y );
+			Graph::TwoPoints rec( { x, y }, { x + w, y + h } );
+			for ( auto &other : obstacles ) {
+				if ( isIntersect( rec, other ) ) {
+					pushed = false;
+					break;
+				}
+			}
+			if ( pushed ) {
+				obstacles.push_back( rec );
+			}
+		}
 	}
 	std::vector<Graph::TwoPoints> nets;
 	for ( int i = 0; i < netCount; i++ ) {
 		bool pushed = false;
 		while ( !pushed ) {
-			Graph::Point p1( random() * width, random() * height ), p2( random() * width, random() * height );
+			pushed = true;
+			Graph::Point p1( rd1() * width, rd1() * height ), p2( rd1() * width, rd1() * height );
 			for ( auto &rec : obstacles ) {
-				if ( !inRectangle( rec, p1 ) && !inRectangle( rec, p2 ) ) {
-					nets.emplace_back( p1, p2 );
-					pushed = true;
+				if ( inRectangle( rec, p1 ) || inRectangle( rec, p2 ) ) {
+					pushed = false;
+					break;
 				}
+			}
+			if ( pushed ) {
+				nets.emplace_back( p1, p2 );
 			}
 		}
 	}
