@@ -11,11 +11,11 @@ set(REQUIRED_LIBS Core Gui Widgets)
 set(REQUIRED_LIBS_QUALIFIED Qt6::Core Qt6::Gui Qt6::Widgets)
 
 add_executable(${PROJECT_NAME}
-        main.cpp
-        graph.cpp
-        ui.cpp
-        graphrender.cpp
-        cdt.cpp
+        src/main.cpp
+        src/graph.cpp
+        src/ui.cpp
+        src/graphrender.cpp
+        src/cdt.cpp
         )
 
 if (NOT CMAKE_PREFIX_PATH)
