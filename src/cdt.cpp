@@ -1,5 +1,6 @@
 #include "algo.h"
 #include "util.h"
+#include <iostream>
 #include <queue>
 #include <set>
 #include <stack>
@@ -54,7 +55,7 @@ struct CDTHelper {
 		std::queue<unsigned> triQueue;
 		auto tryAddEdge = [&]( unsigned x, unsigned y ) {
 			unsigned a = std::min( x, y ), b = std::max( x, y );
-			if ( b >= cdt_graph.nodes.size() ) {
+			if ( b >= cdt_graph.nodes.size() - 3 ) {
 				return;
 			}
 			edges[a].insert( b );
@@ -96,16 +97,18 @@ struct CDTHelper {
 		normalize();
 		binSort();
 		setupSuperTriangle();
-		for ( int i = 0; i < cdt_graph.nodes.size(); ++i ) {
+		for ( int i = 0; i < cdt_graph.nodes.size() - 3; ++i ) {
 			unsigned triangle = findEncloseTriangle( i );
 			splitTriangle( triangle, i );
 			testAndSwapTriangle( i );
+			assert( checkTriangle() );
 		}
 		denormalize();
 	}
 	// Subroutines
 	void normalize()
 	{
+		std::cout << "normalize" << std::endl;
 		dmax = std::max( graph->getWidth(), graph->getHeight() );
 		for ( auto &[x, y, _] : cdt_graph.nodes ) {
 			x /= dmax;
@@ -114,17 +117,23 @@ struct CDTHelper {
 	}
 	void binSort()
 	{
+		std::cout << "bin sort" << std::endl;
 		int ndiv = pow( cdt_graph.nodes.size(), 0.25 );
 		double k = ndiv * 0.99;
 		for ( auto &[x, y, bin] : cdt_graph.nodes ) {
-			int i = y * ndiv;
-			int j = x * ndiv;
+			int i = y * k;
+			int j = x * k;
 			bin = i & 1 ? i * ndiv + j + 1 : ( i + 1 ) * ndiv - j;
 		}
 		std::sort( cdt_graph.nodes.begin(), cdt_graph.nodes.end(), []( auto &p1, auto &p2 ) { return std::get<2>( p1 ) < std::get<2>( p2 ); } );
+		for ( const auto &node : cdt_graph.nodes ) {
+			printNode( node );
+			std::cout << std::endl;
+		}
 	}
 	void setupSuperTriangle()
 	{
+		std::cout << "super triangle" << std::endl;
 		unsigned node_idx = cdt_graph.nodes.size();
 		cdt_graph.nodes.emplace_back( -100, -100 );
 		cdt_graph.nodes.emplace_back( 100, -100 );
@@ -133,6 +142,9 @@ struct CDTHelper {
 	}
 	unsigned findEncloseTriangle( unsigned p )
 	{
+		std::cout << "finding enclosed triangle for ";
+		printNode( cdt_graph.nodes[p] );
+		std::cout << " : ";
 		unsigned triangle = triangle_count;
 		for ( ;; ) {
 			if ( onRightHand( triangle, 0, 1, p ) ) {
@@ -145,17 +157,22 @@ struct CDTHelper {
 				break;
 			}
 		}
+		printTriangle( triangle );
+		std::cout << std::endl;
 		return triangle;
 	}
 	void splitTriangle( unsigned triangle, unsigned node )
 	{
 		auto [p0, p1, p2] = triangleVertices( triangle );
 		auto nt1 = triangle_count + 1, nt2 = triangle_count + 2;
-		pushTriangle( p0, p1, node, adjTriangles.at( { triangle, 0 } ), triangle, nt2 );
-		pushTriangle( p0, node, p2, nt1, triangle, adjTriangles.at( { triangle, 2 } ) );
+		auto &adj0 = adjTriangles.at( { triangle, 0 } ), &adj2 = adjTriangles.at( { triangle, 2 } );
+		pushTriangle( p0, p1, node, adj0, triangle, nt2 );
+		pushTriangle( p0, node, p2, nt1, triangle, adj2 );
+		connectBack( nt1, triangle, adj0 );
+		connectBack( nt2, triangle, adj2 );
 		vertices.at( { triangle, 0 } ) = node;
-		adjTriangles.at( { triangle, 0 } ) = nt1;
-		adjTriangles.at( { triangle, 2 } ) = nt2;
+		adj0 = nt1;
+		adj2 = nt2;
 		triangle_stack.push( triangle );
 		triangle_stack.push( nt1 );
 		triangle_stack.push( nt2 );
@@ -215,11 +232,11 @@ struct CDTHelper {
 
 			vertices.at( { tl, ( ploc + 2 ) % 3 } ) = vertices.at( { tr, ( tr2loc + 1 ) % 3 } );
 			vertices.at( { tr, tr2loc } ) = p;
-			adjTriangles.at( { tl, ( ploc + 1 ) % 3 } ) = ta;
+			connect( tl, tr, ta, ( ploc + 1 ) % 3 );
 			adjTriangles.at( { tl, ( ploc + 2 ) % 3 } ) = tr;
 			adjTriangles.at( { tr, tr2loc } ) = tl;
 			adjTriangles.at( { tr, ( tr2loc + 1 ) % 3 } ) = tb;
-			adjTriangles.at( { tr, ( tr2loc + 2 ) % 3 } ) = tc;
+			connect( tr, tl, tc, ( tr2loc + 2 ) % 3 );
 
 			triangle_stack.push( tl );
 			triangle_stack.push( tr );
@@ -240,7 +257,7 @@ struct CDTHelper {
 		auto [x1, y1, b1] = cdt_graph.nodes[p1];
 		auto [x2, y2, b2] = cdt_graph.nodes[p2];
 		auto [x, y, b] = cdt_graph.nodes[p];
-		return ( x2 - x1 ) * ( y - y1 ) - ( x - x1 ) * ( y2 - y1 ) <= 0;
+		return ( x2 - x1 ) * ( y - y1 ) - ( x - x1 ) * ( y2 - y1 ) < 0;
 	}
 	void pushTriangle( unsigned p0, unsigned p1, unsigned p2, unsigned adj0, unsigned adj1, unsigned adj2 )
 	{
@@ -263,6 +280,63 @@ struct CDTHelper {
 		if ( t > 0 ) {
 			triangle_stack.push( t );
 		}
+	}
+	void connect( unsigned triangle, unsigned old, unsigned other, unsigned idx )
+	{
+		adjTriangles.at( { triangle, idx } ) = other;
+		connectBack( triangle, old, other );
+	}
+	void connectBack( unsigned triangle, unsigned old, unsigned other )
+	{
+		for ( unsigned i = 0; i < 3; i++ ) {
+			auto &adj = adjTriangles.at( { other, i } );
+			if ( adj == old ) {
+				adj = triangle;
+			}
+		}
+	}
+	void printNode( const std::tuple<double, double, unsigned> &node )
+	{
+		std::cout << "(" << std::get<0>( node ) << ", " << std::get<1>( node ) << ", " << std::get<2>( node ) << ") ";
+	}
+	void printTriangle( unsigned t )
+	{
+		std::cout << t << " ";
+		auto [p1, p2, p3] = triangleVertices( t );
+		printNode( cdt_graph.nodes[p1] );
+		printNode( cdt_graph.nodes[p2] );
+		printNode( cdt_graph.nodes[p3] );
+	}
+	bool checkTriangle()
+	{
+		std::vector<bool> vis( triangle_count + 1, false );
+		std::queue<unsigned> q;
+		q.push( 1 );
+		while ( !q.empty() ) {
+			auto t = q.front();
+			q.pop();
+			if ( vis[t] ) {
+				continue;
+			}
+			vis[t] = true;
+			for ( unsigned i = 0; i < 3; i++ ) {
+				auto t2 = adjTriangles.at( { t, i } );
+				if ( t2 == 0 ) {
+					continue;
+				}
+				bool ok = false;
+				for ( unsigned j = 0; j < 3; j++ ) {
+					if ( adjTriangles.at( { t2, j } ) == t ) {
+						ok = true;
+					}
+				}
+				if ( !ok ) {
+					return false;
+				}
+				q.push( t2 );
+			}
+		}
+		return true;
 	}
 
 	Graph *graph;
