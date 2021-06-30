@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "algo.h"
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -53,5 +54,6 @@ void MainUI::generate()
 		}
 	}
 	auto graph = generateRandomGraph( numbers[0], numbers[1], numbers[2], numbers[3] );
+	constructCDT( graph );
 	graphRender->onGraphChanged( graph );
 }

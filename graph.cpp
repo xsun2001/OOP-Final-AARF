@@ -81,24 +81,24 @@ double Graph::getHeight() const
 {
 	return height;
 }
-const std::vector<Graph::TwoPoints> &Graph::getObstacles() const
+const std::vector<TwoPoints> &Graph::getObstacles() const
 {
 	return obstacles;
 }
-const std::vector<Graph::TwoPoints> &Graph::getNets() const
+const std::vector<TwoPoints> &Graph::getNets() const
 {
 	return nets;
 }
-const std::vector<Graph::TwoPoints> &Graph::getCdtEdges() const
+const std::vector<TwoPoints> &Graph::getCdtEdges() const
 {
 	return cdt_edges;
 }
-const std::vector<std::vector<Graph::Point>> &Graph::getRoutes() const
+const std::vector<std::vector<Point>> &Graph::getRoutes() const
 {
 	return routes;
 }
 
-inline bool inRectangle( Graph::TwoPoints &rec, Graph::Point &point )
+inline bool inRectangle( TwoPoints &rec, Point &point )
 {
 	auto [p1, p2] = rec;
 	auto [x, y] = point;
@@ -107,7 +107,7 @@ inline bool inRectangle( Graph::TwoPoints &rec, Graph::Point &point )
 	return x > x1 && x < x2 && y > y1 && y < y2;
 }
 
-inline bool isIntersect( Graph::TwoPoints &rec1, Graph::TwoPoints &rec2 )
+inline bool isIntersect( TwoPoints &rec1, TwoPoints &rec2 )
 {
 #define X( P ) ( std::get<0>( P ) )
 #define Y( P ) ( std::get<1>( P ) )
@@ -123,14 +123,14 @@ Graph *generateRandomGraph( double width, double height, int obsCount, int netCo
 	RandomUniformReal rd1( 0, 1 );
 	RandomNormalReal rd2( 0, 1 );
 	// Plain O(N^2) Algorithm
-	std::vector<Graph::TwoPoints> obstacles;
+	std::vector<TwoPoints> obstacles;
 	double areaFactor = 1.0 / sqrt( 2 * obsCount );
 	for ( int i = 0; i < obsCount; i++ ) {
 		bool pushed = false;
 		while ( !pushed ) {
 			pushed = true;
 			double x = rd1() * width, y = rd1() * height, w = std::min( rd2() * width * areaFactor, width - x ), h = std::min( rd2() * height * areaFactor, height - y );
-			Graph::TwoPoints rec( { x, y }, { x + w, y + h } );
+			TwoPoints rec( { x, y }, { x + w, y + h } );
 			for ( auto &other : obstacles ) {
 				if ( isIntersect( rec, other ) ) {
 					pushed = false;
@@ -142,12 +142,12 @@ Graph *generateRandomGraph( double width, double height, int obsCount, int netCo
 			}
 		}
 	}
-	std::vector<Graph::TwoPoints> nets;
+	std::vector<TwoPoints> nets;
 	for ( int i = 0; i < netCount; i++ ) {
 		bool pushed = false;
 		while ( !pushed ) {
 			pushed = true;
-			Graph::Point p1( rd1() * width, rd1() * height ), p2( rd1() * width, rd1() * height );
+			Point p1( rd1() * width, rd1() * height ), p2( rd1() * width, rd1() * height );
 			for ( auto &rec : obstacles ) {
 				if ( inRectangle( rec, p1 ) || inRectangle( rec, p2 ) ) {
 					pushed = false;

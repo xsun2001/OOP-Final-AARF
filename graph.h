@@ -3,11 +3,12 @@
 #include <tuple>
 #include <vector>
 
+using Point = std::tuple<double, double>;
+using TwoPoints = std::tuple<Point, Point>;
+
 class Graph
 {
 public:
-	using Point = std::tuple<double, double>;
-	using TwoPoints = std::tuple<Point, Point>;
 	void paint( QPainter *painter );
 	Graph( double width, double height, std::vector<TwoPoints> obstacles, std::vector<TwoPoints> nets );
 	Graph( const Graph &other ) = default;
